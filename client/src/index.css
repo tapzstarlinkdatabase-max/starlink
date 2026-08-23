@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    background: #fbf4e9;
+  }
+
+  body {
+    @apply m-0 min-w-[320px] overflow-x-hidden bg-[#fbf4e9] text-[#3c3130] antialiased;
+  }
+
+  button,
+  input,
+  textarea {
+    font: inherit;
+  }
+}

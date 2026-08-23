@@ -1,0 +1,13 @@
+{
+  "name": "starlink-profile-app",
+  "private": true,
+  "version": "1.0.2",
+  "scripts": {
+    "install:all": "npm ci --prefix server && npm ci --prefix client",
+    "dev": "sh ./scripts/dev.sh",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "build": "npm run build --prefix client",
+    "start": "npm start --prefix server"
+  }
+}
