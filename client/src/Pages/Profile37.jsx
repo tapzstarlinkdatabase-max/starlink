@@ -274,7 +274,7 @@ const Profile37 = () => {
                   rel="noopener noreferrer"
                   className="mx-auto mt-1 flex max-w-full items-center justify-center gap-2 text-[16px] font-semibold text-[#3c3130]"
                 >
-                  <FaMapMarkerAlt className="shrink-0 text-[#5d0618]" size={18} />
+                  {/* <FaMapMarkerAlt className="shrink-0 text-[#5d0618]" size={18} /> */}
                   <span className="truncate">{locationLabel}</span>
                 </a>
               ) : (
