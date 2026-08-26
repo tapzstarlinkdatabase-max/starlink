@@ -418,33 +418,13 @@ const EditPortal37 = () => {
               <EditableRow icon={<FaPhoneAlt size={17} />} label="Call" value={form.phone01} onChange={(value) => updateField("phone01", value)} />
               <EditableRow icon={<FaWhatsapp size={17} />} label="WhatsApp" value={form.whatsapp01} onChange={(value) => updateField("whatsapp01", value)} />
               <EditableRow icon={<FaEnvelope size={17} />} label="Email" value={form.email} onChange={(value) => updateField("email", value)} type="email" />
-            </div>
-
-            <div className="mt-3 rounded-[16px] border border-[#ead9c9] bg-[#fffdf8] px-4 py-4 text-left shadow-[0_5px_16px_rgba(106,57,28,0.12)]">
-              <div className="flex items-center gap-3">
-                <div className="relative flex h-8 w-8 shrink-0 items-center justify-center">
-                  <FaStar className="absolute text-[#dfaa5e]" size={30} />
-                  <FaStar className="absolute text-[#f8d28b]" size={20} />
-                </div>
-                <div className="min-w-0 flex-1 space-y-2">
-                  <input
-                    value={form.googleReviewName}
-                    onChange={(event) => updateField("googleReviewName", event.target.value)}
-                    placeholder="Add Google review label"
-                    className="w-full bg-transparent font-serif text-[12px] font-bold text-[#7b1223] outline-none placeholder:text-[#bca79d]"
-                  />
-                  <input
-                    value={form.googleReviewLink}
-                    onChange={(event) => updateField("googleReviewLink", event.target.value)}
-                    placeholder="Add Google review link"
-                    className="w-full bg-transparent text-[12px] font-semibold text-[#8d8178] outline-none placeholder:text-[#c0aaa0]"
-                  />
-                </div>
-                <FieldActions
-                  hasValue={Boolean(form.googleReviewLink.trim() || form.googleReviewName.trim())}
-                  onDelete={() => setForm((current) => ({ ...current, googleReviewLink: "", googleReviewName: "" }))}
-                />
-              </div>
+              <EditableRow
+                icon={<FaStar size={17} />}
+                label="Google Review"
+                value={form.googleReviewLink}
+                onChange={(value) => updateField("googleReviewLink", value)}
+                placeholder="Add Google review link"
+              />
             </div>
 
             <DividerTitle>Photos</DividerTitle>
