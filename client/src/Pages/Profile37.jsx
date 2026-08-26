@@ -261,7 +261,7 @@ const Profile37 = () => {
               <FaCheckCircle className="text-[#5d0618]" size={18} />
             </div>
 
-            <h1 className="mt-3 font-serif text-[34px] font-bold leading-[1.03] tracking-[-0.04em] text-[#5d0618] sm:text-[24px]">
+            <h1 className="mt-3 font-serif text-[24px] font-bold leading-[1.03] tracking-[-0.04em] text-[#5d0618] sm:text-[24px]">
               {personName}
             </h1>
             <p className="mt-2 text-[16px] font-semibold text-[#8d8178]">{roleName}</p>
@@ -279,7 +279,7 @@ const Profile37 = () => {
                 </a>
               ) : (
                 <div className="mx-auto mt-1 flex max-w-full items-center justify-center gap-2 text-[16px] font-semibold text-[#3c3130]">
-                  <FaMapMarkerAlt className="shrink-0 text-[#5d0618]" size={18} />
+                  {/* <FaMapMarkerAlt className="shrink-0 text-[#5d0618]" size={18} /> */}
                   <span className="truncate">{locationLabel}</span>
                 </div>
               )
