@@ -12,9 +12,11 @@ import {
   FaImage,
   FaInstagram,
   FaLink,
+  FaLinkedinIn,
   FaMapMarkerAlt,
   FaMusic,
   FaPhoneAlt,
+  FaQuoteLeft,
   FaPlus,
   FaRegStar,
   FaSave,
@@ -40,7 +42,7 @@ import {
 } from "../api.js";
 
 const FIELDS = [
-  "companyName", "name",
+  "companyName", "name", "description",
   "phone01", "phone02", "phone03",
   "telephone01", "telephone02", "telephone03",
   "services", "clientName", "designation", "address",
@@ -74,16 +76,25 @@ const SOCIAL_GROUPS = [
   { label: "Instagram", icon: <FaInstagram size={17} />, linkBase: "instagramLink", nameBase: "instagramName" },
   { label: "Snapchat", icon: <FaSnapchatGhost size={17} />, linkBase: "snapchatLink", nameBase: "snapchatName" },
   { label: "YouTube", icon: <FaYoutube size={17} />, linkBase: "youtubeLink", nameBase: "youtubeName" },
-  { label: "YouTube Shorts", icon: <FaYoutube size={17} />, linkBase: "youtubeShortsLink", nameBase: "youtubeShortsName" },
+  { label: "LinkedIn", icon: <FaLinkedinIn size={17} />, linkBase: "youtubeShortsLink", nameBase: "youtubeShortsName" },
   { label: "TikTok", icon: <FaMusic size={17} />, linkBase: "tiktokLink", nameBase: "tiktokName" },
   { label: "X / Twitter", icon: <FaTwitter size={17} />, linkBase: "twitterLink", nameBase: "twitterName" },
   { label: "Facebook", icon: <FaFacebookF size={17} />, linkBase: "facebookLink", nameBase: "facebookName" },
 ];
 
+const CONTACT_GROUPS = [
+  { label: "Phone", icon: <FaPhoneAlt size={17} />, fields: ["phone01", "phone02", "phone03"], inputType: "tel" },
+  { label: "Telephone", icon: <FaPhoneAlt size={17} />, fields: ["telephone01", "telephone02", "telephone03"], inputType: "tel" },
+  { label: "WhatsApp", icon: <FaWhatsapp size={17} />, fields: ["whatsapp01", "whatsapp02", "whatsapp03"], inputType: "tel" },
+  { label: "Email", icon: <FaEnvelope size={17} />, fields: ["email", "email02", "email03"], inputType: "email" },
+];
+
 const LINK_GROUPS = [
-  { label: "Google Reviews", icon: <FaStar size={17} />, linkBase: "googleReviewLink", nameBase: "googleReviewName" },
-  { label: "Google Maps", icon: <FaMapMarkerAlt size={17} />, linkBase: "googleMapLink", nameBase: "googleMapName" },
-  { label: "Website", icon: <FaGlobe size={17} />, linkBase: "website", nameBase: "websiteName" },
+  { label: "Google Reviews", icon: <FaStar size={17} />, linkBase: "googleReviewLink", nameBase: "googleReviewName", max: 3 },
+  { label: "Google Maps", icon: <FaMapMarkerAlt size={17} />, linkBase: "googleMapLink", nameBase: "googleMapName", max: 3 },
+  { label: "Website", icon: <FaGlobe size={17} />, linkBase: "website", nameBase: "websiteName", max: 3 },
+  { label: "Menu", icon: <FaUtensils size={17} />, linkFields: ["menuLink"], nameFields: ["menuName"], max: 1 },
+  { label: "Catalogue", icon: <FaBookOpen size={17} />, linkFields: ["catalogueLink"], nameFields: ["catalogueName"], max: 1 },
 ];
 
 const DividerTitle = ({ children }) => (
@@ -161,35 +172,6 @@ const EditableText = ({ label, value, onChange, multiline = false, required = fa
   );
 };
 
-const TripleLinkEditor = ({ group, form, updateField }) => (
-  <div className="overflow-hidden rounded-[14px] border border-[#ead9c9] bg-[#fffdf8] text-left shadow-[0_4px_14px_rgba(106,57,28,0.08)]">
-    <div className="flex items-center gap-3 border-b border-[#ead9c9] bg-[#fff8ee] px-3 py-2.5">
-      <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-[#5d0618] text-white">{group.icon}</div>
-      <span className="font-serif text-sm font-bold text-[#5d0618]">{group.label}</span>
-    </div>
-    {[0, 1, 2].map((index) => {
-      const suffix = slotSuffix(index);
-      const linkField = `${group.linkBase}${suffix}`;
-      const nameField = `${group.nameBase}${suffix}`;
-      const hasValue = Boolean((form[linkField] || "").trim() || (form[nameField] || "").trim());
-      return (
-        <div key={linkField} className="border-b border-[#ead9c9] px-3 py-3 last:border-b-0">
-          <div className="mb-1.5 flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#9a8175]">Account {index + 1}</span>
-            {hasValue ? (
-              <button type="button" onClick={() => { updateField(nameField, ""); updateField(linkField, ""); }} className="flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-bold text-[#8d061c] hover:bg-[#fff1f1]">
-                <FaTrash size={10} /> Delete
-              </button>
-            ) : null}
-          </div>
-          <input value={form[nameField]} onChange={(e) => updateField(nameField, e.target.value)} placeholder={`${group.label} display name`} className="w-full bg-transparent py-1 text-[13px] font-semibold text-[#3c3130] outline-none placeholder:text-[#c0aaa0]" />
-          <input value={form[linkField]} onChange={(e) => updateField(linkField, e.target.value)} placeholder={`${group.label} link`} className="mt-1 w-full border-t border-[#f0e2d7] bg-transparent pt-2 text-[12px] font-medium text-[#a04555] outline-none placeholder:text-[#c0aaa0]" />
-        </div>
-      );
-    })}
-  </div>
-);
-
 const socialSlotFields = (group, index) => {
   const suffix = slotSuffix(index);
   return {
@@ -224,6 +206,55 @@ const SocialMediaCard = ({ group, index, form, onEdit, onDelete }) => {
   );
 };
 
+
+const getUsedContactSlots = (group, form) =>
+  group.fields.map((field, index) => ({ field, index })).filter(({ field }) => Boolean((form[field] || "").trim()));
+
+const ContactCard = ({ group, index, value, onEdit, onDelete }) => (
+  <div className="flex items-center gap-3 rounded-[14px] border border-[#ead9c9] bg-[#fffdf8] px-3 py-3 text-left shadow-[0_4px_14px_rgba(106,57,28,0.07)]">
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[#5d0618] text-white">{group.icon}</div>
+    <div className="min-w-0 flex-1">
+      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#9a8175]">{group.label} {index + 1}</p>
+      <p className="mt-0.5 truncate text-sm font-bold text-[#4a3533]">{value}</p>
+    </div>
+    <div className="flex shrink-0 items-center gap-1">
+      <button type="button" onClick={onEdit} className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#ead9c9] bg-white text-[#7b1223] hover:bg-[#fff8ee]" title="Edit"><FaEdit size={12} /></button>
+      <button type="button" onClick={onDelete} className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#ead9c9] bg-white text-[#8d061c] hover:bg-[#fff1f1]" title="Delete"><FaTrash size={12} /></button>
+    </div>
+  </div>
+);
+
+const linkSlotFields = (group, index) => {
+  if (group.linkFields && group.nameFields) return { linkField: group.linkFields[index], nameField: group.nameFields[index] };
+  const suffix = slotSuffix(index);
+  return { linkField: `${group.linkBase}${suffix}`, nameField: `${group.nameBase}${suffix}` };
+};
+
+const getUsedLinkSlots = (group, form) =>
+  Array.from({ length: group.max }, (_, index) => index).filter((index) => {
+    const { linkField, nameField } = linkSlotFields(group, index);
+    return Boolean((form[linkField] || "").trim() || (form[nameField] || "").trim());
+  });
+
+const LinkCard = ({ group, index, form, onEdit, onDelete }) => {
+  const { linkField, nameField } = linkSlotFields(group, index);
+  const name = form[nameField] || group.label;
+  const link = form[linkField] || "";
+  return (
+    <div className="flex items-center gap-3 rounded-[14px] border border-[#ead9c9] bg-[#fffdf8] px-3 py-3 text-left shadow-[0_4px_14px_rgba(106,57,28,0.07)]">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[#5d0618] text-white">{group.icon}</div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-bold text-[#4a3533]">{name}</p>
+        <p className="mt-0.5 truncate text-[11px] font-medium text-[#a04555]">{link || "No link added"}</p>
+      </div>
+      <div className="flex shrink-0 items-center gap-1">
+        <button type="button" onClick={onEdit} className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#ead9c9] bg-white text-[#7b1223] hover:bg-[#fff8ee]" title="Edit"><FaEdit size={12} /></button>
+        <button type="button" onClick={onDelete} className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#ead9c9] bg-white text-[#8d061c] hover:bg-[#fff1f1]" title="Delete"><FaTrash size={12} /></button>
+      </div>
+    </div>
+  );
+};
+
 const EditPortal37 = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -231,6 +262,8 @@ const EditPortal37 = () => {
   const galleryAddRef = useRef(null);
   const [form, setForm] = useState(() => normalizeForm());
   const [socialDialog, setSocialDialog] = useState(null);
+  const [contactDialog, setContactDialog] = useState(null);
+  const [linkDialog, setLinkDialog] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -285,6 +318,47 @@ const EditPortal37 = () => {
 
   const deleteSocial = (group, index) => {
     const { linkField, nameField } = socialSlotFields(group, index);
+    setForm((current) => ({ ...current, [nameField]: "", [linkField]: "" }));
+    setMessage(`${group.label} removed. Save changes to publish the removal.`);
+  };
+
+
+  const openAddContactDialog = () => setContactDialog({ mode: "select", group: null, field: null, index: null, value: "" });
+  const chooseContactType = (group) => {
+    const used = new Set(getUsedContactSlots(group, form).map(({ index }) => index));
+    const index = group.fields.findIndex((_, slot) => !used.has(slot));
+    if (index < 0) return;
+    setContactDialog({ mode: "add", group, field: group.fields[index], index, value: "" });
+  };
+  const openEditContactDialog = (group, field, index) => setContactDialog({ mode: "edit", group, field, index, value: form[field] || "" });
+  const saveContactDialog = () => {
+    if (!contactDialog?.field || !contactDialog.value.trim()) { setError("Please enter a value."); return; }
+    updateField(contactDialog.field, contactDialog.value.trim());
+    setMessage(`${contactDialog.group.label} ${contactDialog.mode === "edit" ? "updated" : "added"}. Save changes to publish it.`);
+    setError(""); setContactDialog(null);
+  };
+
+  const openAddLinkDialog = () => setLinkDialog({ mode: "select", group: null, index: null, name: "", link: "" });
+  const chooseLinkType = (group) => {
+    const used = new Set(getUsedLinkSlots(group, form));
+    const index = Array.from({ length: group.max }, (_, slot) => slot).find((slot) => !used.has(slot));
+    if (index == null) return;
+    setLinkDialog({ mode: "add", group, index, name: "", link: "" });
+  };
+  const openEditLinkDialog = (group, index) => {
+    const { linkField, nameField } = linkSlotFields(group, index);
+    setLinkDialog({ mode: "edit", group, index, name: form[nameField] || "", link: form[linkField] || "" });
+  };
+  const saveLinkDialog = () => {
+    if (!linkDialog?.group || linkDialog.index == null) return;
+    if (!linkDialog.name.trim() && !linkDialog.link.trim()) { setError("Please add a name or link."); return; }
+    const { linkField, nameField } = linkSlotFields(linkDialog.group, linkDialog.index);
+    setForm((current) => ({ ...current, [nameField]: linkDialog.name.trim(), [linkField]: linkDialog.link.trim() }));
+    setMessage(`${linkDialog.group.label} ${linkDialog.mode === "edit" ? "updated" : "added"}. Save changes to publish it.`);
+    setError(""); setLinkDialog(null);
+  };
+  const deleteLink = (group, index) => {
+    const { linkField, nameField } = linkSlotFields(group, index);
     setForm((current) => ({ ...current, [nameField]: "", [linkField]: "" }));
     setMessage(`${group.label} removed. Save changes to publish the removal.`);
   };
@@ -421,25 +495,28 @@ const EditPortal37 = () => {
               <EditableRow icon={<FaLink size={15} />} label="Roman Name" value={form.romanName} onChange={(value) => updateField("romanName", value)} />
             </div>
 
-            <DividerTitle>Contact Details</DividerTitle>
-            <div className="grid gap-3 md:grid-cols-2">
-              <div className="overflow-hidden rounded-[14px] border border-[#ead9c9] bg-[#fffdf8] py-2">
-                <EditableRow icon={<FaPhoneAlt size={17} />} label="Phone 1" value={form.phone01} onChange={(v) => updateField("phone01", v)} />
-                <EditableRow icon={<FaPhoneAlt size={17} />} label="Phone 2" value={form.phone02} onChange={(v) => updateField("phone02", v)} />
-                <EditableRow icon={<FaPhoneAlt size={17} />} label="Phone 3" value={form.phone03} onChange={(v) => updateField("phone03", v)} />
-                <EditableRow icon={<FaPhoneAlt size={17} />} label="Telephone 1" value={form.telephone01} onChange={(v) => updateField("telephone01", v)} />
-                <EditableRow icon={<FaPhoneAlt size={17} />} label="Telephone 2" value={form.telephone02} onChange={(v) => updateField("telephone02", v)} />
-                <EditableRow icon={<FaPhoneAlt size={17} />} label="Telephone 3" value={form.telephone03} onChange={(v) => updateField("telephone03", v)} />
-              </div>
-              <div className="overflow-hidden rounded-[14px] border border-[#ead9c9] bg-[#fffdf8] py-2">
-                <EditableRow icon={<FaWhatsapp size={17} />} label="WhatsApp 1" value={form.whatsapp01} onChange={(v) => updateField("whatsapp01", v)} />
-                <EditableRow icon={<FaWhatsapp size={17} />} label="WhatsApp 2" value={form.whatsapp02} onChange={(v) => updateField("whatsapp02", v)} />
-                <EditableRow icon={<FaWhatsapp size={17} />} label="WhatsApp 3" value={form.whatsapp03} onChange={(v) => updateField("whatsapp03", v)} />
-                <EditableRow icon={<FaEnvelope size={17} />} label="Email 1" value={form.email} onChange={(v) => updateField("email", v)} type="email" />
-                <EditableRow icon={<FaEnvelope size={17} />} label="Email 2" value={form.email02} onChange={(v) => updateField("email02", v)} type="email" />
-                <EditableRow icon={<FaEnvelope size={17} />} label="Email 3" value={form.email03} onChange={(v) => updateField("email03", v)} type="email" />
+            <DividerTitle>Welcome</DividerTitle>
+            <div className="rounded-[12px] border border-[#ead9c9] bg-[#fffdf8] px-4 py-4 text-center shadow-[0_5px_16px_rgba(106,57,28,0.12)]">
+              <div className="flex items-start gap-2">
+                <FaQuoteLeft className="mt-2 shrink-0 text-[#5d0618]" size={20} />
+                <div className="flex-1">
+                  <EditableText label="Welcome message" value={form.description} onChange={(value) => updateField("description", value)} multiline className="font-serif text-[13px] font-medium leading-[1.5] text-[#3c3130]" />
+                </div>
+                {form.description.trim() ? <button type="button" onClick={() => updateField("description", "")} className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#ead9c9] bg-white text-[#8d061c] hover:bg-[#fff1f1]" title="Delete"><FaTrash size={12} /></button> : null}
               </div>
             </div>
+
+            <DividerTitle>Contact Details</DividerTitle>
+            {CONTACT_GROUPS.some((group) => getUsedContactSlots(group, form).length > 0) ? (
+              <div className="grid gap-3 md:grid-cols-2">
+                {CONTACT_GROUPS.flatMap((group) => getUsedContactSlots(group, form).map(({ field, index }) => (
+                  <ContactCard key={field} group={group} field={field} index={index} value={form[field]} onEdit={() => openEditContactDialog(group, field, index)} onDelete={() => updateField(field, "")} />
+                )))}
+              </div>
+            ) : <div className="rounded-[14px] border border-dashed border-[#dec7ae] bg-[#fffaf3] px-4 py-6 text-sm font-medium text-[#9a8175]">No contact details added yet.</div>}
+            {CONTACT_GROUPS.some((group) => getUsedContactSlots(group, form).length < group.fields.length) ? (
+              <button type="button" onClick={openAddContactDialog} className="mt-3 inline-flex items-center gap-2 rounded-[11px] bg-[#5d0618] px-4 py-2.5 text-sm font-bold text-white shadow-[0_5px_12px_rgba(104,3,22,0.24)]"><FaPlus size={12} /> Add New Contact Detail</button>
+            ) : null}
 
             <DividerTitle>Social Media</DividerTitle>
             {SOCIAL_GROUPS.some((group) => getUsedSocialSlots(group, form).length > 0) ? (
@@ -472,22 +549,16 @@ const EditPortal37 = () => {
             ) : null}
 
             <DividerTitle>Links & Locations</DividerTitle>
-            <div className="grid gap-3 md:grid-cols-2">{LINK_GROUPS.map((group) => <TripleLinkEditor key={group.linkBase} group={group} form={form} updateField={updateField} />)}</div>
-
-            <div className="mt-3 grid gap-3 md:grid-cols-2">
-              <div className="overflow-hidden rounded-[14px] border border-[#ead9c9] bg-[#fffdf8] py-2">
-                <EditableRow icon={<FaUtensils size={15} />} label="Menu Name" value={form.menuName} onChange={(v) => updateField("menuName", v)} />
-                <EditableRow icon={<FaLink size={14} />} label="Menu Link" value={form.menuLink} onChange={(v) => updateField("menuLink", v)} />
-                <EditableRow icon={<FaBookOpen size={15} />} label="Catalogue Name" value={form.catalogueName} onChange={(v) => updateField("catalogueName", v)} />
-                <EditableRow icon={<FaLink size={14} />} label="Catalogue Link" value={form.catalogueLink} onChange={(v) => updateField("catalogueLink", v)} />
+            {LINK_GROUPS.some((group) => getUsedLinkSlots(group, form).length > 0) ? (
+              <div className="grid gap-3 md:grid-cols-2">
+                {LINK_GROUPS.flatMap((group) => getUsedLinkSlots(group, form).map((index) => (
+                  <LinkCard key={`${group.label}-${index}`} group={group} index={index} form={form} onEdit={() => openEditLinkDialog(group, index)} onDelete={() => deleteLink(group, index)} />
+                )))}
               </div>
-              <div className="overflow-hidden rounded-[14px] border border-[#ead9c9] bg-[#fffdf8] py-2">
-                <EditableRow icon={<FaLink size={14} />} label="Profile Link 1 Name" value={form.profileName01} onChange={(v) => updateField("profileName01", v)} />
-                <EditableRow icon={<FaExternalLinkAlt size={13} />} label="Profile Link 1" value={form.profileLink01} onChange={(v) => updateField("profileLink01", v)} />
-                <EditableRow icon={<FaLink size={14} />} label="Profile Link 2 Name" value={form.profileName02} onChange={(v) => updateField("profileName02", v)} />
-                <EditableRow icon={<FaExternalLinkAlt size={13} />} label="Profile Link 2" value={form.profileLink02} onChange={(v) => updateField("profileLink02", v)} />
-              </div>
-            </div>
+            ) : <div className="rounded-[14px] border border-dashed border-[#dec7ae] bg-[#fffaf3] px-4 py-6 text-sm font-medium text-[#9a8175]">No links or locations added yet.</div>}
+            {LINK_GROUPS.some((group) => getUsedLinkSlots(group, form).length < group.max) ? (
+              <button type="button" onClick={openAddLinkDialog} className="mt-3 inline-flex items-center gap-2 rounded-[11px] bg-[#5d0618] px-4 py-2.5 text-sm font-bold text-white shadow-[0_5px_12px_rgba(104,3,22,0.24)]"><FaPlus size={12} /> Add New Link / Location</button>
+            ) : null}
 
             <DividerTitle>Gallery Images</DividerTitle>
             {Array.from({ length: 10 }, (_, index) => `img${String(index + 1).padStart(2, "0")}`).some((field) => Boolean((form[field] || "").trim())) ? (
@@ -530,6 +601,33 @@ const EditPortal37 = () => {
                   onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; addGalleryImage(file); }}
                 />
               </>
+            ) : null}
+
+
+            {contactDialog ? (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-6" onMouseDown={(event) => { if (event.target === event.currentTarget) setContactDialog(null); }}>
+                <div className="w-full max-w-md rounded-[22px] border border-[#ead9c9] bg-[#fffaf3] p-5 text-left shadow-2xl">
+                  <div className="flex items-center justify-between gap-3"><div><p className="font-serif text-xl font-bold text-[#5d0618]">{contactDialog.mode === "select" ? "Add New Contact Detail" : `${contactDialog.mode === "edit" ? "Edit" : "Add"} ${contactDialog.group?.label}`}</p><p className="mt-1 text-xs font-medium text-[#9a8175]">{contactDialog.mode === "select" ? "Choose a contact type. Full types are hidden." : "Enter the contact value."}</p></div><button type="button" onClick={() => setContactDialog(null)} className="flex h-9 w-9 items-center justify-center rounded-full border border-[#ead9c9] bg-white text-[#7b1223]"><FaTimes size={14} /></button></div>
+                  {contactDialog.mode === "select" ? (
+                    <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">{CONTACT_GROUPS.filter((group) => getUsedContactSlots(group, form).length < group.fields.length).map((group) => <button type="button" key={group.label} onClick={() => chooseContactType(group)} className="flex min-h-[90px] flex-col items-center justify-center gap-2 rounded-[14px] border border-[#ead9c9] bg-white px-2 py-3 text-center text-[#5d0618] transition hover:border-[#c99e6e] hover:bg-[#fff5e8]"><span className="text-2xl">{group.icon}</span><span className="text-[11px] font-bold leading-tight">{group.label}</span></button>)}</div>
+                  ) : (
+                    <div className="mt-5"><div className="mb-4 flex items-center gap-3 rounded-[14px] border border-[#ead9c9] bg-white px-3 py-3"><div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-[#5d0618] text-white">{contactDialog.group?.icon}</div><div><p className="font-bold text-[#4a3533]">{contactDialog.group?.label}</p><p className="text-xs text-[#9a8175]">Entry {(contactDialog.index ?? 0) + 1} of 3</p></div></div><label className="block text-xs font-bold uppercase tracking-[0.10em] text-[#8d8178]">Value</label><input type={contactDialog.group?.inputType || "text"} value={contactDialog.value} onChange={(event) => setContactDialog((current) => ({ ...current, value: event.target.value }))} placeholder={`Enter ${contactDialog.group?.label?.toLowerCase() || "value"}`} className="mt-1 w-full rounded-[10px] border border-[#ead9c9] bg-white px-3 py-2.5 text-sm font-semibold text-[#3c3130] outline-none focus:border-[#c99e6e]"/><div className="mt-5 flex justify-end gap-2"><button type="button" onClick={() => setContactDialog(null)} className="rounded-[10px] border border-[#ead9c9] bg-white px-4 py-2.5 text-sm font-bold text-[#7b1223]">Cancel</button><button type="button" onClick={saveContactDialog} className="rounded-[10px] bg-[#5d0618] px-4 py-2.5 text-sm font-bold text-white">{contactDialog.mode === "edit" ? "Update" : "Add"}</button></div></div>
+                  )}
+                </div>
+              </div>
+            ) : null}
+
+            {linkDialog ? (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-6" onMouseDown={(event) => { if (event.target === event.currentTarget) setLinkDialog(null); }}>
+                <div className="w-full max-w-md rounded-[22px] border border-[#ead9c9] bg-[#fffaf3] p-5 text-left shadow-2xl">
+                  <div className="flex items-center justify-between gap-3"><div><p className="font-serif text-xl font-bold text-[#5d0618]">{linkDialog.mode === "select" ? "Add New Link / Location" : `${linkDialog.mode === "edit" ? "Edit" : "Add"} ${linkDialog.group?.label}`}</p><p className="mt-1 text-xs font-medium text-[#9a8175]">{linkDialog.mode === "select" ? "Choose a type. Types at their maximum are hidden." : "Add a display name and link."}</p></div><button type="button" onClick={() => setLinkDialog(null)} className="flex h-9 w-9 items-center justify-center rounded-full border border-[#ead9c9] bg-white text-[#7b1223]"><FaTimes size={14} /></button></div>
+                  {linkDialog.mode === "select" ? (
+                    <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">{LINK_GROUPS.filter((group) => getUsedLinkSlots(group, form).length < group.max).map((group) => <button type="button" key={group.label} onClick={() => chooseLinkType(group)} className="flex min-h-[90px] flex-col items-center justify-center gap-2 rounded-[14px] border border-[#ead9c9] bg-white px-2 py-3 text-center text-[#5d0618] transition hover:border-[#c99e6e] hover:bg-[#fff5e8]"><span className="text-2xl">{group.icon}</span><span className="text-[11px] font-bold leading-tight">{group.label}</span></button>)}</div>
+                  ) : (
+                    <div className="mt-5"><div className="mb-4 flex items-center gap-3 rounded-[14px] border border-[#ead9c9] bg-white px-3 py-3"><div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-[#5d0618] text-white">{linkDialog.group?.icon}</div><div><p className="font-bold text-[#4a3533]">{linkDialog.group?.label}</p><p className="text-xs text-[#9a8175]">{linkDialog.group?.max === 1 ? "Single entry" : `Entry ${(linkDialog.index ?? 0) + 1} of ${linkDialog.group?.max}`}</p></div></div><label className="block text-xs font-bold uppercase tracking-[0.10em] text-[#8d8178]">Name</label><input value={linkDialog.name} onChange={(event) => setLinkDialog((current) => ({ ...current, name: event.target.value }))} placeholder={`${linkDialog.group?.label || "Link"} display name`} className="mt-1 w-full rounded-[10px] border border-[#ead9c9] bg-white px-3 py-2.5 text-sm font-semibold text-[#3c3130] outline-none focus:border-[#c99e6e]"/><label className="mt-4 block text-xs font-bold uppercase tracking-[0.10em] text-[#8d8178]">Link</label><input value={linkDialog.link} onChange={(event) => setLinkDialog((current) => ({ ...current, link: event.target.value }))} placeholder="https://..." className="mt-1 w-full rounded-[10px] border border-[#ead9c9] bg-white px-3 py-2.5 text-sm font-semibold text-[#3c3130] outline-none focus:border-[#c99e6e]"/><div className="mt-5 flex justify-end gap-2"><button type="button" onClick={() => setLinkDialog(null)} className="rounded-[10px] border border-[#ead9c9] bg-white px-4 py-2.5 text-sm font-bold text-[#7b1223]">Cancel</button><button type="button" onClick={saveLinkDialog} className="rounded-[10px] bg-[#5d0618] px-4 py-2.5 text-sm font-bold text-white">{linkDialog.mode === "edit" ? "Update" : "Add"}</button></div></div>
+                  )}
+                </div>
+              </div>
             ) : null}
 
             {socialDialog ? (

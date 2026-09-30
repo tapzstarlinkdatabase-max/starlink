@@ -12,9 +12,11 @@ import {
   FaHeart,
   FaInstagram,
   FaLink,
+  FaLinkedinIn,
   FaMapMarkerAlt,
   FaMusic,
   FaPhoneAlt,
+  FaQuoteLeft,
   FaRegStar,
   FaSnapchatGhost,
   FaStar,
@@ -95,12 +97,13 @@ const Profile37 = () => {
   const telephones = [client?.telephone01, client?.telephone02, client?.telephone03].map(cleanText).filter(Boolean);
   const whatsapps = [client?.whatsapp01, client?.whatsapp02, client?.whatsapp03].map(cleanText).filter(Boolean);
   const emails = [client?.email, client?.email02, client?.email03].map(cleanText).filter(Boolean);
+  const quoteText = displayValue(client?.description) || `Thank you for visiting ${brandName}.\nI'm here whenever you need technology advice.`;
 
   const socialGroups = [
     { label: "Instagram", icon: <FaInstagram size={17} />, linkBase: "instagramLink", nameBase: "instagramName" },
     { label: "Snapchat", icon: <FaSnapchatGhost size={17} />, linkBase: "snapchatLink", nameBase: "snapchatName" },
     { label: "YouTube", icon: <FaYoutube size={17} />, linkBase: "youtubeLink", nameBase: "youtubeName" },
-    { label: "YouTube Shorts", icon: <FaYoutube size={17} />, linkBase: "youtubeShortsLink", nameBase: "youtubeShortsName" },
+    { label: "LinkedIn", icon: <FaLinkedinIn size={17} />, linkBase: "youtubeShortsLink", nameBase: "youtubeShortsName" },
     { label: "TikTok", icon: <FaMusic size={17} />, linkBase: "tiktokLink", nameBase: "tiktokName" },
     { label: "X / Twitter", icon: <FaTwitter size={17} />, linkBase: "twitterLink", nameBase: "twitterName" },
     { label: "Facebook", icon: <FaFacebookF size={17} />, linkBase: "facebookLink", nameBase: "facebookName" },
@@ -172,6 +175,14 @@ const Profile37 = () => {
             <h1 className="mt-3 font-serif text-[25px] font-bold leading-[1.03] tracking-[-0.04em] text-[#5d0618]">{personName}</h1>
             <p className="mt-2 text-[16px] font-semibold text-[#8d8178]">{roleName}</p>
             {locationLabel ? <div className="mx-auto mt-1 flex max-w-full items-center justify-center gap-2 text-[16px] font-semibold text-[#3c3130]"><span className="truncate">{locationLabel}</span></div> : null}
+
+            <DividerTitle>Welcome</DividerTitle>
+            <div className="rounded-[12px] border border-[#ead9c9] bg-[#fffdf8] px-4 py-5 text-center shadow-[0_5px_16px_rgba(106,57,28,0.12)]">
+              <div className="flex items-start gap-2">
+                <FaQuoteLeft className="mt-1 shrink-0 text-[#5d0618]" size={20} />
+                <p className="w-full whitespace-pre-line font-serif text-[13px] font-medium leading-[1.5] text-[#3c3130]">{quoteText}</p>
+              </div>
+            </div>
 
             {(phones.length || telephones.length || whatsapps.length || emails.length) ? (
               <><DividerTitle>Contact</DividerTitle><div className="overflow-hidden rounded-[14px] border border-[#ead9c9] bg-[#fffdf8] py-2 shadow-[0_4px_14px_rgba(106,57,28,0.1)]">
