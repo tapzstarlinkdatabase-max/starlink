@@ -15,7 +15,6 @@ import {
   FaMapMarkerAlt,
   FaMusic,
   FaPhoneAlt,
-  FaQuoteLeft,
   FaRegStar,
   FaSnapchatGhost,
   FaStar,
@@ -91,7 +90,6 @@ const Profile37 = () => {
   const locationLabel = displayValue(client?.address || client?.googleMapName || client?.location, `${brandName} Store`);
   const profileImage = client?.logo || client?.images;
   const galleryImages = [client?.img01, client?.img02, client?.img03, client?.img04, client?.img05, client?.img06, client?.img07, client?.img08, client?.img09, client?.img10].filter(Boolean);
-  const quoteText = displayValue(client?.description) || `Thank you for visiting ${brandName}.\nI'm here whenever you need technology advice.`;
 
   const phones = [client?.phone01, client?.phone02, client?.phone03].map(cleanText).filter(Boolean);
   const telephones = [client?.telephone01, client?.telephone02, client?.telephone03].map(cleanText).filter(Boolean);
@@ -174,9 +172,6 @@ const Profile37 = () => {
             <h1 className="mt-3 font-serif text-[25px] font-bold leading-[1.03] tracking-[-0.04em] text-[#5d0618]">{personName}</h1>
             <p className="mt-2 text-[16px] font-semibold text-[#8d8178]">{roleName}</p>
             {locationLabel ? <div className="mx-auto mt-1 flex max-w-full items-center justify-center gap-2 text-[16px] font-semibold text-[#3c3130]"><span className="truncate">{locationLabel}</span></div> : null}
-
-            <DividerTitle>Welcome</DividerTitle>
-            <div className="rounded-[12px] border border-[#ead9c9] bg-[#fffdf8] px-4 py-5 text-center shadow-[0_5px_16px_rgba(106,57,28,0.12)]"><div className="flex items-start gap-2"><FaQuoteLeft className="mt-1 shrink-0 text-[#5d0618]" size={20} /><p className="w-full whitespace-pre-line font-serif text-[13px] font-medium leading-[1.5] text-[#3c3130]">{quoteText}</p></div></div>
 
             {(phones.length || telephones.length || whatsapps.length || emails.length) ? (
               <><DividerTitle>Contact</DividerTitle><div className="overflow-hidden rounded-[14px] border border-[#ead9c9] bg-[#fffdf8] py-2 shadow-[0_4px_14px_rgba(106,57,28,0.1)]">

@@ -1,9 +1,10 @@
 /* eslint-disable react/prop-types */
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  FaArrowLeft,
   FaBookOpen,
+  FaCheck,
   FaCheckCircle,
+  FaEdit,
   FaEnvelope,
   FaExternalLinkAlt,
   FaFacebookF,
@@ -15,12 +16,12 @@ import {
   FaMusic,
   FaPhoneAlt,
   FaPlus,
-  FaQuoteLeft,
   FaRegStar,
   FaSave,
   FaSignOutAlt,
   FaSnapchatGhost,
   FaStar,
+  FaTimes,
   FaTrash,
   FaTwitter,
   FaUpload,
@@ -39,10 +40,10 @@ import {
 } from "../api.js";
 
 const FIELDS = [
-  "companyName", "name", "description",
+  "companyName", "name",
   "phone01", "phone02", "phone03",
   "telephone01", "telephone02", "telephone03",
-  "services", "clientName", "designation", "qr", "address",
+  "services", "clientName", "designation", "address",
   "whatsapp01", "whatsapp02", "whatsapp03", "location",
   "instagramLink", "instagramLink02", "instagramLink03", "instagramName", "instagramName02", "instagramName03",
   "snapchatLink", "snapchatLink02", "snapchatLink03", "snapchatName", "snapchatName02", "snapchatName03",
@@ -59,7 +60,6 @@ const FIELDS = [
   "profileLink01", "profileLink02", "profileName01", "profileName02",
   "logo", "romanName", "images",
   "img01", "img02", "img03", "img04", "img05", "img06", "img07", "img08", "img09", "img10",
-  "color01", "color02", "color03", "option",
 ];
 
 const normalizeForm = (profile = {}) =>
@@ -96,28 +96,53 @@ const DividerTitle = ({ children }) => (
   </div>
 );
 
-const FieldActions = ({ onDelete, hasValue }) => (
-  <div className="flex shrink-0 items-center gap-1">
-    {hasValue ? (
-      <button type="button" onClick={onDelete} className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#ead9c9] bg-white text-[#8d061c] transition hover:bg-[#fff1f1]" aria-label="Delete value" title="Delete">
-        <FaTrash size={12} />
-      </button>
-    ) : (
-      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f3dec1] text-[#7b1223]"><FaPlus size={12} /></span>
-    )}
-  </div>
-);
-
 const EditableRow = ({ icon, label, value, onChange, type = "text", placeholder }) => {
+  const [editing, setEditing] = useState(false);
   const hasValue = Boolean(String(value || "").trim());
+
   return (
     <div className="flex items-center gap-3 border-b border-[#ead9c9] px-3 py-2.5 last:border-b-0">
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-[#5d0618] text-white shadow-[0_5px_12px_rgba(141,6,28,0.20)]">{icon}</div>
       <div className="min-w-0 flex-1 text-left">
         <label className="block text-[10px] font-bold uppercase tracking-[0.12em] text-[#8d8178]">{label}</label>
-        <input type={type} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder || `Add ${label.toLowerCase()}`} className="mt-0.5 w-full border-0 bg-transparent p-0 text-[13px] font-semibold text-[#3c3130] outline-none placeholder:font-medium placeholder:text-[#c0aaa0]" />
+        {editing ? (
+          <input
+            autoFocus
+            type={type}
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            placeholder={placeholder || `Add ${label.toLowerCase()}`}
+            className="mt-0.5 w-full border-0 bg-transparent p-0 text-[13px] font-semibold text-[#3c3130] outline-none placeholder:font-medium placeholder:text-[#c0aaa0]"
+            onKeyDown={(event) => { if (event.key === "Enter") setEditing(false); }}
+          />
+        ) : (
+          <p className={`mt-0.5 truncate text-[13px] font-semibold ${hasValue ? "text-[#3c3130]" : "text-[#b7a49b]"}`}>
+            {hasValue ? value : "Not added"}
+          </p>
+        )}
       </div>
-      <FieldActions hasValue={hasValue} onDelete={() => onChange("")} />
+      <div className="flex shrink-0 items-center gap-1">
+        <button
+          type="button"
+          onClick={() => setEditing((current) => !current)}
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#ead9c9] bg-white text-[#7b1223] transition hover:bg-[#fff8ee]"
+          aria-label={editing ? `Finish editing ${label}` : `Edit ${label}`}
+          title={editing ? "Done" : "Edit"}
+        >
+          {editing ? <FaCheck size={12} /> : <FaEdit size={12} />}
+        </button>
+        {hasValue ? (
+          <button
+            type="button"
+            onClick={() => { onChange(""); setEditing(false); }}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#ead9c9] bg-white text-[#8d061c] transition hover:bg-[#fff1f1]"
+            aria-label={`Delete ${label}`}
+            title="Delete"
+          >
+            <FaTrash size={12} />
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 };
@@ -165,11 +190,47 @@ const TripleLinkEditor = ({ group, form, updateField }) => (
   </div>
 );
 
+const socialSlotFields = (group, index) => {
+  const suffix = slotSuffix(index);
+  return {
+    linkField: `${group.linkBase}${suffix}`,
+    nameField: `${group.nameBase}${suffix}`,
+  };
+};
+
+const getUsedSocialSlots = (group, form) =>
+  [0, 1, 2].filter((index) => {
+    const { linkField, nameField } = socialSlotFields(group, index);
+    return Boolean((form[linkField] || "").trim() || (form[nameField] || "").trim());
+  });
+
+const SocialMediaCard = ({ group, index, form, onEdit, onDelete }) => {
+  const { linkField, nameField } = socialSlotFields(group, index);
+  const name = form[nameField] || group.label;
+  const link = form[linkField] || "";
+
+  return (
+    <div className="flex items-center gap-3 rounded-[14px] border border-[#ead9c9] bg-[#fffdf8] px-3 py-3 text-left shadow-[0_4px_14px_rgba(106,57,28,0.07)]">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[#5d0618] text-white">{group.icon}</div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-bold text-[#4a3533]">{name}</p>
+        <p className="mt-0.5 truncate text-[11px] font-medium text-[#a04555]">{link || "No link added"}</p>
+      </div>
+      <div className="flex shrink-0 items-center gap-1">
+        <button type="button" onClick={onEdit} className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#ead9c9] bg-white text-[#7b1223] hover:bg-[#fff8ee]" title="Edit"><FaEdit size={12} /></button>
+        <button type="button" onClick={onDelete} className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#ead9c9] bg-white text-[#8d061c] hover:bg-[#fff1f1]" title="Delete"><FaTrash size={12} /></button>
+      </div>
+    </div>
+  );
+};
+
 const EditPortal37 = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const fileRef = useRef(null);
+  const galleryAddRef = useRef(null);
   const [form, setForm] = useState(() => normalizeForm());
+  const [socialDialog, setSocialDialog] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -179,6 +240,53 @@ const EditPortal37 = () => {
   const updateField = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
     setMessage("");
+  };
+
+  const closeSocialDialog = () => setSocialDialog(null);
+
+  const openAddSocialDialog = () => {
+    setSocialDialog({ mode: "select", group: null, index: null, name: "", link: "" });
+  };
+
+  const chooseSocialPlatform = (group) => {
+    const used = new Set(getUsedSocialSlots(group, form));
+    const index = [0, 1, 2].find((slot) => !used.has(slot));
+    if (index == null) return;
+    setSocialDialog({ mode: "add", group, index, name: "", link: "" });
+  };
+
+  const openEditSocialDialog = (group, index) => {
+    const { linkField, nameField } = socialSlotFields(group, index);
+    setSocialDialog({
+      mode: "edit",
+      group,
+      index,
+      name: form[nameField] || "",
+      link: form[linkField] || "",
+    });
+  };
+
+  const saveSocialDialog = () => {
+    if (!socialDialog?.group || socialDialog.index == null) return;
+    if (!socialDialog.name.trim() && !socialDialog.link.trim()) {
+      setError("Please add a social media name or link.");
+      return;
+    }
+    const { linkField, nameField } = socialSlotFields(socialDialog.group, socialDialog.index);
+    setForm((current) => ({
+      ...current,
+      [nameField]: socialDialog.name.trim(),
+      [linkField]: socialDialog.link.trim(),
+    }));
+    setMessage(`${socialDialog.group.label} ${socialDialog.mode === "edit" ? "updated" : "added"}. Save changes to publish it.`);
+    setError("");
+    closeSocialDialog();
+  };
+
+  const deleteSocial = (group, index) => {
+    const { linkField, nameField } = socialSlotFields(group, index);
+    setForm((current) => ({ ...current, [nameField]: "", [linkField]: "" }));
+    setMessage(`${group.label} removed. Save changes to publish the removal.`);
   };
 
   useEffect(() => {
@@ -232,6 +340,13 @@ const EditPortal37 = () => {
       setMessage("Photo uploaded. Save changes to publish it.");
     } catch (uploadError) { setError(uploadError.message || "Image upload failed."); }
     finally { setUploading(false); }
+  };
+
+  const addGalleryImage = async (file) => {
+    if (!file) return;
+    const emptyField = Array.from({ length: 10 }, (_, index) => `img${String(index + 1).padStart(2, "0")}`).find((field) => !(form[field] || "").trim());
+    if (!emptyField) return;
+    await uploadGalleryImage(emptyField, file);
   };
 
   const deleteImage = () => {
@@ -306,9 +421,6 @@ const EditPortal37 = () => {
               <EditableRow icon={<FaLink size={15} />} label="Roman Name" value={form.romanName} onChange={(value) => updateField("romanName", value)} />
             </div>
 
-            <DividerTitle>Welcome</DividerTitle>
-            <div className="rounded-[12px] border border-[#ead9c9] bg-[#fffdf8] px-4 py-4 text-center shadow-[0_5px_16px_rgba(106,57,28,0.12)]"><div className="flex items-start gap-2"><FaQuoteLeft className="mt-2 shrink-0 text-[#5d0618]" size={20} /><div className="flex-1"><EditableText label="Welcome message" value={form.description} onChange={(value) => updateField("description", value)} multiline className="font-serif text-[13px] font-medium leading-[1.5] text-[#3c3130]" /></div><FieldActions hasValue={Boolean(form.description.trim())} onDelete={() => updateField("description", "")} /></div></div>
-
             <DividerTitle>Contact Details</DividerTitle>
             <div className="grid gap-3 md:grid-cols-2">
               <div className="overflow-hidden rounded-[14px] border border-[#ead9c9] bg-[#fffdf8] py-2">
@@ -330,7 +442,34 @@ const EditPortal37 = () => {
             </div>
 
             <DividerTitle>Social Media</DividerTitle>
-            <div className="grid gap-3 md:grid-cols-2">{SOCIAL_GROUPS.map((group) => <TripleLinkEditor key={group.linkBase} group={group} form={form} updateField={updateField} />)}</div>
+            {SOCIAL_GROUPS.some((group) => getUsedSocialSlots(group, form).length > 0) ? (
+              <div className="grid gap-3 md:grid-cols-2">
+                {SOCIAL_GROUPS.flatMap((group) =>
+                  getUsedSocialSlots(group, form).map((index) => (
+                    <SocialMediaCard
+                      key={`${group.linkBase}-${index}`}
+                      group={group}
+                      index={index}
+                      form={form}
+                      onEdit={() => openEditSocialDialog(group, index)}
+                      onDelete={() => deleteSocial(group, index)}
+                    />
+                  )),
+                )}
+              </div>
+            ) : (
+              <div className="rounded-[14px] border border-dashed border-[#dec7ae] bg-[#fffaf3] px-4 py-6 text-sm font-medium text-[#9a8175]">No social media added yet.</div>
+            )}
+
+            {SOCIAL_GROUPS.some((group) => getUsedSocialSlots(group, form).length < 3) ? (
+              <button
+                type="button"
+                onClick={openAddSocialDialog}
+                className="mt-3 inline-flex items-center gap-2 rounded-[11px] bg-[#5d0618] px-4 py-2.5 text-sm font-bold text-white shadow-[0_5px_12px_rgba(104,3,22,0.24)]"
+              >
+                <FaPlus size={12} /> Add New Social Media
+              </button>
+            ) : null}
 
             <DividerTitle>Links & Locations</DividerTitle>
             <div className="grid gap-3 md:grid-cols-2">{LINK_GROUPS.map((group) => <TripleLinkEditor key={group.linkBase} group={group} form={form} updateField={updateField} />)}</div>
@@ -350,36 +489,107 @@ const EditPortal37 = () => {
               </div>
             </div>
 
-            <DividerTitle>Photos</DividerTitle>
-            <div className="grid grid-cols-2 gap-2 rounded-[14px] border border-[#ead9c9] bg-[#fffdf8] p-3 shadow-[0_4px_14px_rgba(106,57,28,0.1)] sm:grid-cols-3 md:grid-cols-5">
-              {Array.from({ length: 10 }, (_, index) => {
-                const field = `img${String(index + 1).padStart(2, "0")}`;
-                const image = form[field];
-                return (
-                  <div key={field} className="relative aspect-square overflow-hidden rounded-[12px] border border-[#ead9c9] bg-[#fff7ed]">
-                    {image ? <img src={image} alt={`Gallery ${index + 1}`} className="h-full w-full object-cover" /> : <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-[#b89572]"><FaImage size={24} /><span className="text-[11px] font-bold uppercase tracking-[0.10em]">Photo {index + 1}</span></div>}
-                    <label className="absolute bottom-2 right-2 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-[#5d0618] text-white shadow-lg" title={image ? "Replace photo" : "Add photo"}>{image ? <FaUpload size={12} /> : <FaPlus size={12} />}<input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; uploadGalleryImage(field, file); }} /></label>
-                    {image ? <button type="button" onClick={() => updateField(field, "")} className="absolute bottom-2 left-2 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-white text-[#8d061c] shadow-lg" title="Delete photo"><FaTrash size={11} /></button> : null}
+            <DividerTitle>Gallery Images</DividerTitle>
+            {Array.from({ length: 10 }, (_, index) => `img${String(index + 1).padStart(2, "0")}`).some((field) => Boolean((form[field] || "").trim())) ? (
+              <div className="grid grid-cols-2 gap-2 rounded-[14px] border border-[#ead9c9] bg-[#fffdf8] p-3 shadow-[0_4px_14px_rgba(106,57,28,0.1)] sm:grid-cols-3 md:grid-cols-5">
+                {Array.from({ length: 10 }, (_, index) => {
+                  const field = `img${String(index + 1).padStart(2, "0")}`;
+                  const image = form[field];
+                  if (!image) return null;
+                  return (
+                    <div key={field} className="relative aspect-square overflow-hidden rounded-[12px] border border-[#ead9c9] bg-[#fff7ed]">
+                      <img src={image} alt={`Gallery ${index + 1}`} className="h-full w-full object-cover" />
+                      <label className="absolute bottom-2 right-2 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-[#5d0618] text-white shadow-lg" title="Edit / replace photo">
+                        <FaEdit size={12} />
+                        <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; uploadGalleryImage(field, file); }} />
+                      </label>
+                      <button type="button" onClick={() => updateField(field, "")} className="absolute bottom-2 left-2 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-white text-[#8d061c] shadow-lg" title="Delete photo"><FaTrash size={11} /></button>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="rounded-[14px] border border-dashed border-[#dec7ae] bg-[#fffaf3] px-4 py-6 text-sm font-medium text-[#9a8175]">No gallery images added yet.</div>
+            )}
+
+            {Array.from({ length: 10 }, (_, index) => `img${String(index + 1).padStart(2, "0")}`).filter((field) => Boolean((form[field] || "").trim())).length < 10 ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => galleryAddRef.current?.click()}
+                  disabled={uploading}
+                  className="mt-3 inline-flex items-center gap-2 rounded-[11px] bg-[#5d0618] px-4 py-2.5 text-sm font-bold text-white shadow-[0_5px_12px_rgba(104,3,22,0.24)] disabled:opacity-60"
+                >
+                  <FaPlus size={12} /> {uploading ? "Uploading..." : "Add New Gallery Image"}
+                </button>
+                <input
+                  ref={galleryAddRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; addGalleryImage(file); }}
+                />
+              </>
+            ) : null}
+
+            {socialDialog ? (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-6" onMouseDown={(event) => { if (event.target === event.currentTarget) closeSocialDialog(); }}>
+                <div className="w-full max-w-md rounded-[22px] border border-[#ead9c9] bg-[#fffaf3] p-5 text-left shadow-2xl">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-serif text-xl font-bold text-[#5d0618]">{socialDialog.mode === "select" ? "Add New Social Media" : socialDialog.mode === "edit" ? `Edit ${socialDialog.group?.label}` : `Add ${socialDialog.group?.label}`}</p>
+                      <p className="mt-1 text-xs font-medium text-[#9a8175]">{socialDialog.mode === "select" ? "Choose a platform. Platforms with all 3 accounts already used are hidden." : "Add a display name and profile link."}</p>
+                    </div>
+                    <button type="button" onClick={closeSocialDialog} className="flex h-9 w-9 items-center justify-center rounded-full border border-[#ead9c9] bg-white text-[#7b1223]"><FaTimes size={14} /></button>
                   </div>
-                );
-              })}
-            </div>
 
-            <DividerTitle>Profile Settings</DividerTitle>
-            <div className="grid gap-3 md:grid-cols-2">
-              <div className="overflow-hidden rounded-[14px] border border-[#ead9c9] bg-[#fffdf8] py-2 text-left">
-                <EditableRow icon={<FaArrowLeft size={14} />} label="Profile URL name" value={form.companyName} onChange={(value) => updateField("companyName", value.replace(/\s+/g, "-"))} />
-                <EditableRow icon={<FaLink size={13} />} label="QR" value={form.qr} onChange={(v) => updateField("qr", v)} />
-                <EditableRow icon={<FaLink size={13} />} label="Option" value={form.option} onChange={(v) => updateField("option", v)} />
+                  {socialDialog.mode === "select" ? (
+                    <div className="mt-5 grid grid-cols-3 gap-3 sm:grid-cols-4">
+                      {SOCIAL_GROUPS.filter((group) => getUsedSocialSlots(group, form).length < 3).map((group) => (
+                        <button
+                          type="button"
+                          key={group.linkBase}
+                          onClick={() => chooseSocialPlatform(group)}
+                          className="flex min-h-[90px] flex-col items-center justify-center gap-2 rounded-[14px] border border-[#ead9c9] bg-white px-2 py-3 text-center text-[#5d0618] transition hover:border-[#c99e6e] hover:bg-[#fff5e8]"
+                        >
+                          <span className="text-2xl">{group.icon}</span>
+                          <span className="text-[11px] font-bold leading-tight">{group.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="mt-5">
+                      <div className="mb-4 flex items-center gap-3 rounded-[14px] border border-[#ead9c9] bg-white px-3 py-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-[#5d0618] text-white">{socialDialog.group?.icon}</div>
+                        <div>
+                          <p className="font-bold text-[#4a3533]">{socialDialog.group?.label}</p>
+                          <p className="text-xs text-[#9a8175]">Account {(socialDialog.index ?? 0) + 1} of 3</p>
+                        </div>
+                      </div>
+                      <label className="block text-xs font-bold uppercase tracking-[0.10em] text-[#8d8178]">Name</label>
+                      <input
+                        value={socialDialog.name}
+                        onChange={(event) => setSocialDialog((current) => ({ ...current, name: event.target.value }))}
+                        placeholder={`${socialDialog.group?.label || "Social media"} display name`}
+                        className="mt-1 w-full rounded-[10px] border border-[#ead9c9] bg-white px-3 py-2.5 text-sm font-semibold text-[#3c3130] outline-none focus:border-[#c99e6e]"
+                      />
+                      <label className="mt-4 block text-xs font-bold uppercase tracking-[0.10em] text-[#8d8178]">Link</label>
+                      <input
+                        value={socialDialog.link}
+                        onChange={(event) => setSocialDialog((current) => ({ ...current, link: event.target.value }))}
+                        placeholder="https://..."
+                        className="mt-1 w-full rounded-[10px] border border-[#ead9c9] bg-white px-3 py-2.5 text-sm font-semibold text-[#3c3130] outline-none focus:border-[#c99e6e]"
+                      />
+                      <div className="mt-5 flex justify-end gap-2">
+                        <button type="button" onClick={closeSocialDialog} className="rounded-[10px] border border-[#ead9c9] bg-white px-4 py-2.5 text-sm font-bold text-[#7b1223]">Cancel</button>
+                        <button type="button" onClick={saveSocialDialog} className="rounded-[10px] bg-[#5d0618] px-4 py-2.5 text-sm font-bold text-white">{socialDialog.mode === "edit" ? "Update" : "Add"}</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="overflow-hidden rounded-[14px] border border-[#ead9c9] bg-[#fffdf8] py-2 text-left">
-                <EditableRow icon={<FaStar size={13} />} label="Color 1" value={form.color01} onChange={(v) => updateField("color01", v)} />
-                <EditableRow icon={<FaStar size={13} />} label="Color 2" value={form.color02} onChange={(v) => updateField("color02", v)} />
-                <EditableRow icon={<FaStar size={13} />} label="Color 3" value={form.color03} onChange={(v) => updateField("color03", v)} />
-              </div>
-            </div>
+            ) : null}
 
-            {profileUrl ? <p className="mt-2 break-all px-2 text-[11px] font-medium text-[#a68c79]">{profileUrl}</p> : null}
             {error ? <p className="mt-4 rounded-[10px] border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{error}</p> : null}
             {message ? <p className="mt-4 rounded-[10px] border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">{message}</p> : null}
 

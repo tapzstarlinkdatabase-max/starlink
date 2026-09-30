@@ -100,4 +100,3 @@ http://abc.com/rabia-zubair
 ```
 
 The existing MongoDB URI, database name, `clients` collection, and client schema are unchanged.
-# starlink
